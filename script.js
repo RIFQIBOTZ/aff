@@ -12,6 +12,14 @@ const pad = n => String(n).padStart(2, '0');
 const sum = arr => arr.reduce((a, b) => a + b, 0);
 const num = (n, d = 1) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: d });
 const zero = () => ({ manual: 0, gpt: 0, claude: 0 });
+const SHAPE = {
+  manual: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/>',
+  gpt: '<circle cx="12" cy="12" r="9"/>',
+  claude: '<path d="M12 3l10 18H2z"/>'
+};
+const ICO = {}; KEYS.forEach(k => ICO[k] = `<svg class="shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE[k]}</svg>`);
+const EMPTY = (path, text) => `<div class="empty"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${path}</svg><p>${text}</p></div>`;
+const EMPTY_LIST = '<path d="M5 6h14M5 12h14M5 18h9"/>', EMPTY_BARS = '<path d="M5 20V11M12 20V4M19 20v-6"/>';
 
 /* ---------- data ---------- */
 function normalize(d) {
@@ -61,36 +69,28 @@ function stop() {
 function tap(m) {
   const a = S.active; if (!a || !a.resumedAt) return;
   a.taps.push({ m, t: Date.now() }); save(); renderSesi();
-  if (navigator.vibrate) navigator.vibrate(10);
 }
 function undo() {
   const a = S.active; if (!a || !a.taps.length) return;
   a.taps.pop(); save(); renderSesi();
 }
 
-const RING = 2 * Math.PI * 136;
-function setBtn(el, icon, text) { $('use', el).setAttribute('href', '#i-' + icon); $('span', el).textContent = text; }
-function paintClock() {
-  const a = S.active, ms = a ? elapsed(a) : 0;
-  $('#clock').textContent = fmt(ms);
-  $('#ring').style.strokeDashoffset = RING * (1 - (ms % 60000) / 60000);
-}
 function renderSesi() {
   const a = S.active, running = !!(a && a.resumedAt);
-  paintClock();
-  $('#status-text').textContent = !a ? 'Siap' : running ? 'Jalan' : 'Dijeda';
-  $('#status').classList.toggle('live', running);
-  $('#ring').classList.toggle('on', running);
-  setBtn($('#btn-main'), running ? 'pause' : 'play', !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut');
+  document.body.dataset.state = !a ? 'idle' : running ? 'run' : 'pause';
+  $('#clock').textContent = fmt(a ? elapsed(a) : 0);
+  $('#status').textContent = !a ? 'Belum jalan' : running ? 'Jalan' : 'Dijeda';
+  $('#btn-main').textContent = !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut';
   $('#btn-stop').hidden = !a;
   const c = a ? tapCounts(a) : zero();
   KEYS.forEach(k => { $(`[data-n="${k}"]`).textContent = c[k]; });
   $$('.method').forEach(b => b.disabled = !running);
   $('#btn-undo').disabled = !a || !a.taps.length;
-  $('#hint').textContent = !a ? 'Tekan Mulai, lalu ketuk metode setiap selesai posting satu sharelink'
-    : running ? `${a.taps.length} sharelink di sesi ini` : 'Sesi dijeda, tekan Lanjut untuk mencatat lagi';
+  $('#hint').textContent = !a
+    ? 'Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.'
+    : running ? `Total ${a.taps.length} sharelink di sesi ini.` : 'Sesi dijeda. Tekan Lanjut untuk mencatat lagi.';
 }
-setInterval(() => { if (S.active && S.active.resumedAt) paintClock(); }, 200);
+setInterval(() => { if (S.active && S.active.resumedAt) $('#clock').textContent = fmt(elapsed(S.active)); }, 200);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) renderSesi(); });
 
 /* ---------- riwayat ---------- */
@@ -98,25 +98,26 @@ const dayLinks = k => sum(S.sessions.filter(s => dayKey(s.start) === k).map(s =>
 
 function dayInfo(k) {
   const l = dayLinks(k), c = S.dayClicks[k];
-  return `${l} sharelink tercatat` + (c != null && l ? `, ${num(c / l)} klik per sharelink` : '');
+  const r = c != null && l ? ` Klik per sharelink: ${num(c / l)}.` : '';
+  return `${l} sharelink tercatat.${r}`;
 }
 
 function sessionCard(s) {
   const rows = KEYS.map(k => `
-    <div class="m">
-      <span class="name">${M[k]}</span>
-      <span class="n">${s.links[k]} link</span>
-      <label><span>Pesanan</span><input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}" aria-label="Pesanan ${M[k]}"></label>
+    <div class="m ${k}">
+      ${ICO[k]}
+      <span class="who"><span class="name">${M[k]}</span><span class="n">${s.links[k]} link</span></span>
+      <label>Pesanan <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
     </div>`).join('');
   return `<article class="sess" data-id="${s.id}">
-    <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="del" data-del aria-label="Hapus sesi"><svg class="ic"><use href="#i-trash"/></svg></button></div>
+    <div class="row"><strong>${clockOf(s.start)}</strong><span class="dur">${fmt(s.duration)}</span><button class="del" data-del>Hapus</button></div>
     ${rows}</article>`;
 }
 
 function renderRiwayat() {
   const box = $('#riwayat');
   if (!S.sessions.length) {
-    box.innerHTML = '<p class="empty">Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.</p>';
+    box.innerHTML = EMPTY(EMPTY_LIST, 'Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.');
     return;
   }
   const groups = {};
@@ -127,7 +128,7 @@ function renderRiwayat() {
     return `<section class="day" data-day="${k}">
       <header>
         <h3>${dayLabel(k)}</h3>
-        <label class="clk">Klik Shopee
+        <label class="clk">Total klik hari ini dari Shopee
           <input type="number" inputmode="numeric" min="0" data-clicks placeholder="isi" value="${c != null ? c : ''}"></label>
         <p class="dim" data-info>${dayInfo(k)}</p>
       </header>
@@ -163,7 +164,7 @@ $('#riwayat').addEventListener('click', e => {
 /* ---------- ringkasan ---------- */
 function renderRingkasan() {
   const box = $('#ringkasan');
-  if (!S.sessions.length) { box.innerHTML = '<p class="empty">Belum ada data. Selesaikan satu sesi, lalu isi pesanannya di Riwayat</p>'; return; }
+  if (!S.sessions.length) { box.innerHTML = EMPTY(EMPTY_BARS, 'Belum ada data untuk diringkas.'); return; }
 
   const t = {}; KEYS.forEach(k => t[k] = { links: 0, orders: 0, sess: 0 });
   let ms = 0;
@@ -173,32 +174,28 @@ function renderRingkasan() {
   });
   const links = sum(KEYS.map(k => t[k].links)), orders = sum(KEYS.map(k => t[k].orders));
   const hours = ms / 3600000;
+
   let clicks = 0, clickLinks = 0;
   Object.keys(S.dayClicks).forEach(d => { const l = dayLinks(d); if (l) { clicks += S.dayClicks[d]; clickLinks += l; } });
 
-  const rate = k => t[k].links ? t[k].orders / t[k].links * 100 : 0;
-  const max = Math.max(...KEYS.map(rate));
-  // aksen hanya untuk yang unggul, dan hanya kalau minimal dua metode sudah punya sampel cukup
-  const ok = KEYS.filter(k => t[k].links >= MIN_LINKS);
-  const lead = ok.length > 1 ? ok.reduce((b, k) => rate(k) > rate(b) ? k : b) : null;
-
-  const stats = `<div class="stats">
-    <div class="stat"><span>Sharelink per jam</span><b>${hours > 0 ? num(links / hours) : '-'}</b></div>
-    <div class="stat"><span>Pesanan</span><b>${orders}</b></div>
-    <div class="stat"><span>Klik per sharelink</span><b>${clickLinks ? num(clicks / clickLinks) : '-'}</b></div>
+  const T = (v, l) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`;
+  const all = `<div class="grid">
+    ${T(S.sessions.length, 'Jumlah sesi')}${T(fmt(ms), 'Total durasi')}${T(links, 'Sharelink')}${T(hours > 0 ? num(links / hours) : '-', 'Sharelink per jam')}${T(orders, 'Pesanan')}${T(clickLinks ? num(clicks / clickLinks) : '-', clickLinks ? 'Klik per sharelink' : 'Klik per sharelink (isi klik harian dulu)')}
   </div>`;
 
-  const rows = KEYS.map(k => {
-    const d = t[k], r = rate(k), w = max ? r / max : 0;
-    return `<div class="rank">
-      <div class="top"><span class="name">${M[k]}</span><b>${d.links ? num(r) : '-'}</b></div>
-      <div class="bar"><i class="${k === lead && r > 0 ? 'lead' : ''}" style="transform:scaleX(${w})"></i></div>
-      <p class="meta">${d.links} link, ${d.orders} pesanan, ${d.sess} sesi${d.links < MIN_LINKS ? `<span>Sampel kecil, di bawah ${MIN_LINKS} link belum layak dibandingkan</span>` : ''}</p>
+  const per = KEYS.map(k => {
+    const d = t[k], small = d.links < MIN_LINKS;
+    return `<div class="card ${k}">
+      <h3>${ICO[k]}${M[k]}</h3>
+      <div class="big"><b>${d.links ? num(d.orders / d.links * 100) : '-'}</b><span>Pesanan per 100 sharelink</span></div>
+      <div class="stat"><span>Sharelink</span><b>${d.links}</b></div>
+      <div class="stat"><span>Jumlah sesi memakai metode ini</span><b>${d.sess}</b></div>
+      <div class="stat"><span>Pesanan</span><b>${d.orders}</b></div>
+      ${small ? `<p class="warn"><b>Sampel kecil.</b> Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
     </div>`;
   }).join('');
 
-  box.innerHTML = stats + `<div class="rank-card"><h3>Pesanan per 100 sharelink</h3>${rows}</div>` +
-    `<p class="note">Klik Shopee tidak bisa dipecah per tag, jadi hanya pesanan yang dibandingkan antar metode. Pesanan tanpa tag dihitung Manual, sehingga pesanan dari postingan lama yang tidak tercatat ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya. Kalau klik harian belum diisi, klik per sharelink kosong.</p>`;
+  box.innerHTML = '<h2 class="sec">Semua sesi</h2>' + all + '<h2 class="sec">Per metode</h2>' + per + `<p class="note">Yang dibandingkan antar metode hanya pesanan per sharelink, karena klik Shopee tidak bisa dipecah per tag. Pesanan tanpa tag dihitung Manual, jadi pesanan dari postingan lama yang tidak tercatat di sini ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya.</p>`;
 }
 
 /* ---------- ekspor dan impor ---------- */
@@ -228,7 +225,6 @@ function importJSON(file) {
 function showTab(name) {
   $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   ['sesi', 'riwayat', 'ringkasan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
-  const sec = $(`#tab-${name}`); sec.classList.remove('enter'); void sec.offsetWidth; sec.classList.add('enter');
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
 }
