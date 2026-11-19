@@ -12,14 +12,6 @@ const pad = n => String(n).padStart(2, '0');
 const sum = arr => arr.reduce((a, b) => a + b, 0);
 const num = (n, d = 1) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: d });
 const zero = () => ({ manual: 0, gpt: 0, claude: 0 });
-const SHAPE = {
-  manual: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/>',
-  gpt: '<circle cx="12" cy="12" r="9"/>',
-  claude: '<path d="M12 3l10 18H2z"/>'
-};
-const ICO = {}; KEYS.forEach(k => ICO[k] = `<svg class="shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE[k]}</svg>`);
-const EMPTY = (path, text) => `<div class="empty"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${path}</svg><p>${text}</p></div>`;
-const EMPTY_LIST = '<path d="M5 6h14M5 12h14M5 18h9"/>', EMPTY_BARS = '<path d="M5 20V11M12 20V4M19 20v-6"/>';
 
 /* ---------- data ---------- */
 function normalize(d) {
@@ -77,7 +69,6 @@ function undo() {
 
 function renderSesi() {
   const a = S.active, running = !!(a && a.resumedAt);
-  document.body.dataset.state = !a ? 'idle' : running ? 'run' : 'pause';
   $('#clock').textContent = fmt(a ? elapsed(a) : 0);
   $('#status').textContent = !a ? 'Belum jalan' : running ? 'Jalan' : 'Dijeda';
   $('#btn-main').textContent = !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut';
@@ -105,19 +96,19 @@ function dayInfo(k) {
 function sessionCard(s) {
   const rows = KEYS.map(k => `
     <div class="m ${k}">
-      ${ICO[k]}
-      <span class="who"><span class="name">${M[k]}</span><span class="n">${s.links[k]} link</span></span>
+      <span class="name">${M[k]}</span>
+      <span class="n">${s.links[k]} link</span>
       <label>Pesanan <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
     </div>`).join('');
   return `<article class="sess" data-id="${s.id}">
-    <div class="row"><strong>${clockOf(s.start)}</strong><span class="dur">${fmt(s.duration)}</span><button class="del" data-del>Hapus</button></div>
+    <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="del" data-del>Hapus</button></div>
     ${rows}</article>`;
 }
 
 function renderRiwayat() {
   const box = $('#riwayat');
   if (!S.sessions.length) {
-    box.innerHTML = EMPTY(EMPTY_LIST, 'Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.');
+    box.innerHTML = '<p class="empty">Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.</p>';
     return;
   }
   const groups = {};
@@ -164,7 +155,7 @@ $('#riwayat').addEventListener('click', e => {
 /* ---------- ringkasan ---------- */
 function renderRingkasan() {
   const box = $('#ringkasan');
-  if (!S.sessions.length) { box.innerHTML = EMPTY(EMPTY_BARS, 'Belum ada data untuk diringkas.'); return; }
+  if (!S.sessions.length) { box.innerHTML = '<p class="empty">Belum ada data untuk diringkas.</p>'; return; }
 
   const t = {}; KEYS.forEach(k => t[k] = { links: 0, orders: 0, sess: 0 });
   let ms = 0;
@@ -178,24 +169,27 @@ function renderRingkasan() {
   let clicks = 0, clickLinks = 0;
   Object.keys(S.dayClicks).forEach(d => { const l = dayLinks(d); if (l) { clicks += S.dayClicks[d]; clickLinks += l; } });
 
-  const T = (v, l) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`;
-  const all = `<div class="grid">
-    ${T(S.sessions.length, 'Jumlah sesi')}${T(fmt(ms), 'Total durasi')}${T(links, 'Sharelink')}${T(hours > 0 ? num(links / hours) : '-', 'Sharelink per jam')}${T(orders, 'Pesanan')}${T(clickLinks ? num(clicks / clickLinks) : '-', clickLinks ? 'Klik per sharelink' : 'Klik per sharelink (isi klik harian dulu)')}
+  const all = `<div class="card all"><h3>Semua sesi</h3>
+    <div class="stat"><span>Jumlah sesi</span><b>${S.sessions.length}</b></div>
+    <div class="stat"><span>Total durasi</span><b>${fmt(ms)}</b></div>
+    <div class="stat"><span>Sharelink</span><b>${links}</b></div>
+    <div class="stat"><span>Sharelink per jam</span><b>${hours > 0 ? num(links / hours) : '-'}</b></div>
+    <div class="stat"><span>Pesanan</span><b>${orders}</b></div>
+    <div class="stat"><span>Klik per sharelink</span><b>${clickLinks ? num(clicks / clickLinks) : 'isi klik harian dulu'}</b></div>
   </div>`;
 
   const per = KEYS.map(k => {
     const d = t[k], small = d.links < MIN_LINKS;
-    return `<div class="card ${k}">
-      <h3>${ICO[k]}${M[k]}</h3>
-      <div class="big"><b>${d.links ? num(d.orders / d.links * 100) : '-'}</b><span>Pesanan per 100 sharelink</span></div>
+    return `<div class="card ${k}"><h3>${M[k]}</h3>
       <div class="stat"><span>Sharelink</span><b>${d.links}</b></div>
       <div class="stat"><span>Jumlah sesi memakai metode ini</span><b>${d.sess}</b></div>
       <div class="stat"><span>Pesanan</span><b>${d.orders}</b></div>
-      ${small ? `<p class="warn"><b>Sampel kecil.</b> Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
+      <div class="stat"><span>Pesanan per 100 sharelink</span><b>${d.links ? num(d.orders / d.links * 100) : '-'}</b></div>
+      ${small ? `<p class="warn">Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
     </div>`;
   }).join('');
 
-  box.innerHTML = '<h2 class="sec">Semua sesi</h2>' + all + '<h2 class="sec">Per metode</h2>' + per + `<p class="note">Yang dibandingkan antar metode hanya pesanan per sharelink, karena klik Shopee tidak bisa dipecah per tag. Pesanan tanpa tag dihitung Manual, jadi pesanan dari postingan lama yang tidak tercatat di sini ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya.</p>`;
+  box.innerHTML = all + per + `<p class="note">Yang dibandingkan antar metode hanya pesanan per sharelink, karena klik Shopee tidak bisa dipecah per tag. Pesanan tanpa tag dihitung Manual, jadi pesanan dari postingan lama yang tidak tercatat di sini ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya.</p>`;
 }
 
 /* ---------- ekspor dan impor ---------- */
