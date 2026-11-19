@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Tracker Sharelink</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="sesi" aria-selected="true">Sesi</button>
+    <button role="tab" data-tab="riwayat" aria-selected="false">Riwayat</button>
+    <button role="tab" data-tab="ringkasan" aria-selected="false">Ringkasan</button>
+  </nav>
+
+  <section id="tab-sesi">
+    <div class="clock" id="clock" aria-live="off">00:00:00</div>
+    <p class="status" id="status">Belum jalan</p>
+
+    <div class="ctrls">
+      <button id="btn-main" class="primary">Mulai</button>
+      <button id="btn-stop" class="ghost" hidden>Selesai</button>
+    </div>
+
+    <div class="methods" id="methods">
+      <button class="method manual" data-m="manual"><span class="name">Manual</span><span class="n" data-n="manual">0</span></button>
+      <button class="method gpt" data-m="gpt"><span class="name">IMAGE GPT</span><span class="n" data-n="gpt">0</span></button>
+      <button class="method claude" data-m="claude"><span class="name">IMAGE CLAUDE</span><span class="n" data-n="claude">0</span></button>
+    </div>
+
+    <button id="btn-undo" class="ghost small">Batalkan tap terakhir</button>
+    <p class="hint" id="hint">Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.</p>
+  </section>
+
+  <section id="tab-riwayat" hidden>
+    <div id="riwayat"></div>
+  </section>
+
+  <section id="tab-ringkasan" hidden>
+    <div id="ringkasan"></div>
+    <div class="backup">
+      <h3>Cadangan data</h3>
+      <p class="dim">Data tersimpan di browser ini. Kalau cache dihapus atau ganti HP, data hilang. Ekspor berkala.</p>
+      <div class="ctrls">
+        <button id="btn-export" class="ghost">Ekspor JSON</button>
+        <button id="btn-import" class="ghost">Impor JSON</button>
+        <input type="file" id="file-import" accept="application/json,.json" hidden>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
