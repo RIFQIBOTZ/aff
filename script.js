@@ -5,6 +5,12 @@ const M = { manual: 'Manual', gpt: 'IMAGE GPT', claude: 'IMAGE CLAUDE' };
 const KEYS = Object.keys(M);
 const MIN_LINKS = 30; // patokan kasar: di bawah ini sampel dianggap terlalu kecil
 const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const TITLES = { sesi: 'Sesi', riwayat: 'Riwayat', ringkasan: 'Ringkasan' };
+const SUBS = {
+  sesi: 'Catat sharelink yang kamu posting, lengkap dengan stopwatch',
+  riwayat: 'Isi pesanan dan klik harian tiap sesi',
+  ringkasan: 'Bandingkan hasil tiap metode posting'
+};
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -12,6 +18,8 @@ const pad = n => String(n).padStart(2, '0');
 const sum = arr => arr.reduce((a, b) => a + b, 0);
 const num = (n, d = 1) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: d });
 const zero = () => ({ manual: 0, gpt: 0, claude: 0 });
+const icon = id => `<svg class="ic" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { /* abaikan */ } };
 
 /* ---------- data ---------- */
 function normalize(d) {
@@ -34,6 +42,29 @@ function load() {
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage penuh atau diblokir */ } }
 let S = load();
 
+/* ---------- ui helpers: dialog konfirmasi + toast ---------- */
+const dlg = $('#dlg');
+function ask(message, okLabel = 'OK', danger = false) {
+  if (!dlg || typeof dlg.showModal !== 'function') return Promise.resolve(confirm(message));
+  $('#dlg-msg').textContent = message;
+  const ok = $('#dlg-ok');
+  ok.textContent = okLabel;
+  ok.classList.toggle('danger', danger);
+  ok.classList.toggle('primary', !danger);
+  return new Promise(res => {
+    dlg.returnValue = 'cancel';
+    dlg.addEventListener('close', () => res(dlg.returnValue === 'ok'), { once: true });
+    dlg.showModal();
+  });
+}
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
 /* ---------- format waktu ---------- */
 const fmt = ms => { const s = Math.floor(ms / 1000); return `${pad(Math.floor(s / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`; };
 const clockOf = ms => { const d = new Date(ms); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
@@ -49,39 +80,56 @@ function startOrToggle() {
   if (!a) S.active = { id: now, startedAt: now, acc: 0, resumedAt: now, taps: [] };
   else if (a.resumedAt) { a.acc = elapsed(a, now); a.resumedAt = null; }
   else a.resumedAt = now;
-  save(); renderSesi();
+  save(); renderSesi(); buzz(15);
 }
-function stop() {
+async function stop() {
   const a = S.active; if (!a) return;
-  if (!confirm('Akhiri sesi ini dan simpan ke Riwayat?')) return;
+  if (!(await ask('Akhiri sesi ini dan simpan ke Riwayat?', 'Selesai'))) return;
+  if (S.active !== a) return;
   S.sessions.push({ id: a.id, start: a.startedAt, duration: elapsed(a), links: tapCounts(a), orders: zero() });
   S.active = null; save();
   renderSesi(); renderRiwayat(); showTab('riwayat');
+  toast('Sesi tersimpan');
 }
 function tap(m) {
   const a = S.active; if (!a || !a.resumedAt) return;
-  a.taps.push({ m, t: Date.now() }); save(); renderSesi();
+  a.taps.push({ m, t: Date.now() }); save(); renderSesi(); buzz(10);
+  const el = $(`.method[data-m="${m}"]`);
+  el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
 }
 function undo() {
   const a = S.active; if (!a || !a.taps.length) return;
-  a.taps.pop(); save(); renderSesi();
+  const last = a.taps.pop(); save(); renderSesi();
+  toast(`${M[last.m]} dibatalkan`);
 }
 
 function renderSesi() {
   const a = S.active, running = !!(a && a.resumedAt);
+  const state = !a ? 'Belum jalan' : running ? 'Jalan' : 'Dijeda';
   $('#clock').textContent = fmt(a ? elapsed(a) : 0);
-  $('#status').textContent = !a ? 'Belum jalan' : running ? 'Jalan' : 'Dijeda';
-  $('#btn-main').textContent = !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut';
+  $('#status').textContent = state;
+  $('#pill').className = 'pill' + (running ? ' run' : a ? ' pause' : '');
+  $('#hero').classList.toggle('run', running);
+  const label = !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut';
+  $('#btn-main').innerHTML = `${icon(running ? 'pause' : 'play')}<span>${label}</span>`;
   $('#btn-stop').hidden = !a;
   const c = a ? tapCounts(a) : zero();
   KEYS.forEach(k => { $(`[data-n="${k}"]`).textContent = c[k]; });
   $$('.method').forEach(b => b.disabled = !running);
   $('#btn-undo').disabled = !a || !a.taps.length;
+  $('#hero-total').textContent = a ? a.taps.length : 0;
+  updateRate();
   $('#hint').textContent = !a
     ? 'Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.'
     : running ? `Total ${a.taps.length} sharelink di sesi ini.` : 'Sesi dijeda. Tekan Lanjut untuk mencatat lagi.';
 }
-setInterval(() => { if (S.active && S.active.resumedAt) $('#clock').textContent = fmt(elapsed(S.active)); }, 200);
+function updateRate() {
+  const a = S.active, ms = a ? elapsed(a) : 0;
+  $('#hero-rate').textContent = a && a.taps.length && ms >= 60000 ? num(a.taps.length / (ms / 3600000)) : '-';
+}
+setInterval(() => {
+  if (S.active && S.active.resumedAt) { $('#clock').textContent = fmt(elapsed(S.active)); updateRate(); }
+}, 200);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) renderSesi(); });
 
 /* ---------- riwayat ---------- */
@@ -98,10 +146,10 @@ function sessionCard(s) {
     <div class="m ${k}">
       <span class="name">${M[k]}</span>
       <span class="n">${s.links[k]} link</span>
-      <label>Pesanan <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
+      <label>Pesanan <input type="number" inputmode="numeric" min="0" aria-label="Pesanan ${M[k]}" data-order="${k}" value="${s.orders[k]}"></label>
     </div>`).join('');
   return `<article class="sess" data-id="${s.id}">
-    <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="del" data-del>Hapus</button></div>
+    <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="del" data-del aria-label="Hapus sesi">${icon('trash')}Hapus</button></div>
     ${rows}</article>`;
 }
 
@@ -144,12 +192,13 @@ $('#riwayat').addEventListener('change', e => {
     save();
   }
 });
-$('#riwayat').addEventListener('click', e => {
-  if (!e.target.matches('[data-del]')) return;
-  const id = e.target.closest('.sess').dataset.id;
-  if (!confirm('Hapus sesi ini? Tidak bisa dibatalkan.')) return;
+$('#riwayat').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-del]');
+  if (!btn) return;
+  const id = btn.closest('.sess').dataset.id;
+  if (!(await ask('Hapus sesi ini? Tidak bisa dibatalkan.', 'Hapus', true))) return;
   S.sessions = S.sessions.filter(x => String(x.id) !== id);
-  save(); renderRiwayat();
+  save(); renderRiwayat(); toast('Sesi dihapus');
 });
 
 /* ---------- ringkasan ---------- */
@@ -169,23 +218,29 @@ function renderRingkasan() {
   let clicks = 0, clickLinks = 0;
   Object.keys(S.dayClicks).forEach(d => { const l = dayLinks(d); if (l) { clicks += S.dayClicks[d]; clickLinks += l; } });
 
-  const all = `<div class="card all"><h3>Semua sesi</h3>
-    <div class="stat"><span>Jumlah sesi</span><b>${S.sessions.length}</b></div>
-    <div class="stat"><span>Total durasi</span><b>${fmt(ms)}</b></div>
-    <div class="stat"><span>Sharelink</span><b>${links}</b></div>
-    <div class="stat"><span>Sharelink per jam</span><b>${hours > 0 ? num(links / hours) : '-'}</b></div>
-    <div class="stat"><span>Pesanan</span><b>${orders}</b></div>
-    <div class="stat"><span>Klik per sharelink</span><b>${clickLinks ? num(clicks / clickLinks) : 'isi klik harian dulu'}</b></div>
+  const rate = k => t[k].links ? t[k].orders / t[k].links * 100 : 0;
+  const maxRate = Math.max(...KEYS.map(rate), 0);
+
+  const sc = (c, label, val, small = '') => `<div class="stat-card ${c}"><div class="stat-label">${label}</div><div class="stat-value">${val}</div>${small}</div>`;
+  const all = `<div class="kpis">
+    ${sc('c1', 'Jumlah sesi', S.sessions.length)}
+    ${sc('c2', 'Total durasi', fmt(ms))}
+    ${sc('c3', 'Sharelink', links)}
+    ${sc('c4', 'Sharelink per jam', hours > 0 ? num(links / hours) : '-')}
+    ${sc('c5', 'Pesanan', orders)}
+    ${sc('c6', 'Klik per sharelink', clickLinks ? num(clicks / clickLinks) : '-', clickLinks ? '' : '<small>isi klik harian dulu</small>')}
   </div>`;
 
   const per = KEYS.map(k => {
     const d = t[k], small = d.links < MIN_LINKS;
+    const w = maxRate > 0 ? rate(k) / maxRate * 100 : 0;
     return `<div class="card ${k}"><h3>${M[k]}</h3>
       <div class="stat"><span>Sharelink</span><b>${d.links}</b></div>
       <div class="stat"><span>Jumlah sesi memakai metode ini</span><b>${d.sess}</b></div>
       <div class="stat"><span>Pesanan</span><b>${d.orders}</b></div>
-      <div class="stat"><span>Pesanan per 100 sharelink</span><b>${d.links ? num(d.orders / d.links * 100) : '-'}</b></div>
-      ${small ? `<p class="warn">Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
+      <div class="stat hl"><span>Pesanan per 100 sharelink</span><b>${d.links ? num(rate(k)) : '-'}</b></div>
+      <div class="bar" aria-hidden="true"><i style="width:${w}%"></i></div>
+      ${small ? `<p class="warn">${icon('alert')}<span>Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</span></p>` : ''}
     </div>`;
   }).join('');
 
@@ -204,27 +259,49 @@ function exportJSON() {
 function importJSON(file) {
   if (!file) return;
   const r = new FileReader();
-  r.onload = () => {
+  r.onload = async () => {
+    let d;
     try {
-      const d = JSON.parse(r.result);
+      d = JSON.parse(r.result);
       if (!d || !Array.isArray(d.sessions)) throw new Error('format');
-      if (!confirm(`Ganti semua data sekarang dengan isi file ini (${d.sessions.length} sesi)?`)) return;
-      S = normalize(d); save(); renderAll();
-    } catch (e) { alert('File tidak valid. Pakai file hasil Ekspor JSON dari halaman ini.'); }
+    } catch (e) { toast('File tidak valid. Pakai file hasil Ekspor JSON dari halaman ini.'); return; }
+    if (!(await ask(`Ganti semua data sekarang dengan isi file ini (${d.sessions.length} sesi)?`, 'Ganti data', true))) return;
+    S = normalize(d); save(); renderAll(); toast('Data diimpor');
   };
   r.readAsText(file);
 }
 
 /* ---------- tab dan event ---------- */
 function showTab(name) {
-  $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  $$('.sidebar-item').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   ['sesi', 'riwayat', 'ringkasan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
+  $('#title').textContent = TITLES[name];
+  $('#subtitle').textContent = SUBS[name];
+  closeMenu();
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
+  window.scrollTo(0, 0);
 }
+/* ---------- sidebar (geser di HP, tetap terbuka di layar lebar) ---------- */
+const side = $('#sidebar'), scrim = $('#scrim'), burger = $('#btn-menu');
+function openMenu() {
+  side.classList.add('open'); scrim.hidden = false; burger.setAttribute('aria-expanded', 'true');
+  const cur = $('.sidebar-item[aria-selected="true"]'); cur && cur.focus();
+}
+function closeMenu() {
+  if (!side.classList.contains('open')) return;
+  const hadFocus = side.contains(document.activeElement);
+  side.classList.remove('open'); scrim.hidden = true; burger.setAttribute('aria-expanded', 'false');
+  if (hadFocus) burger.focus();
+}
+burger.addEventListener('click', openMenu);
+$('#btn-close').addEventListener('click', closeMenu);
+scrim.addEventListener('click', closeMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !dlg.open) closeMenu(); });
+
 function renderAll() { renderSesi(); renderRiwayat(); renderRingkasan(); }
 
-$$('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+$$('.sidebar-item').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 $('#btn-main').addEventListener('click', startOrToggle);
 $('#btn-stop').addEventListener('click', stop);
 $('#btn-undo').addEventListener('click', undo);
