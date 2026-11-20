@@ -4,21 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#0a0a0b">
+<meta name="theme-color" content="#05060a">
 <title>Tracker Sharelink</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body data-state="idle">
 <main>
   <section id="tab-sesi">
-    <div class="timer">
+    <div class="timer"><div class="in">
+      <span class="glow" aria-hidden="true"></span>
       <p class="state"><span class="dot"></span><span id="status">Belum jalan</span></p>
       <div class="clock" id="clock" aria-live="off">00:00:00</div>
       <p class="hint" id="hint">Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.</p>
-    </div>
+    </div></div>
 
     <div class="methods" id="methods">
-      <button class="method manual" data-m="manual"><svg class="shape" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="1"/></svg><span class="name">Manual</span><span class="n" data-n="manual">0</span></button>
+      <button class="method manual" data-m="manual"><svg class="shape" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/></svg><span class="name">Manual</span><span class="n" data-n="manual">0</span></button>
       <button class="method gpt" data-m="gpt"><svg class="shape" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg><span class="name">IMAGE GPT</span><span class="n" data-n="gpt">0</span></button>
       <button class="method claude" data-m="claude"><svg class="shape" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l10 18H2z"/></svg><span class="name">IMAGE CLAUDE</span><span class="n" data-n="claude">0</span></button>
     </div>

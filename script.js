@@ -66,13 +66,24 @@ function stop() {
   S.active = null; save();
   renderSesi(); renderRiwayat(); showTab('riwayat');
 }
-function tap(m) {
+function fx(m, e) {
+  const btn = $(`.method[data-m="${m}"]`); if (!btn) return;
+  const n = $('.n', btn); n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
+  const r = btn.getBoundingClientRect();
+  const x = e && e.clientX ? e.clientX - r.left : r.width / 2, y = e && e.clientY ? e.clientY - r.top : r.height / 2;
+  const rip = document.createElement('span'); rip.className = 'rip';
+  rip.style.left = x + 'px'; rip.style.top = y + 'px';
+  btn.append(rip); setTimeout(() => rip.remove(), 700);
+  try { if (navigator.vibrate) navigator.vibrate(18); } catch (err) { /* tidak didukung */ }
+}
+function tap(m, e) {
   const a = S.active; if (!a || !a.resumedAt) return;
-  a.taps.push({ m, t: Date.now() }); save(); renderSesi();
+  a.taps.push({ m, t: Date.now() }); save(); renderSesi(); fx(m, e);
 }
 function undo() {
   const a = S.active; if (!a || !a.taps.length) return;
   a.taps.pop(); save(); renderSesi();
+  try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* tidak didukung */ }
 }
 
 function renderSesi() {
@@ -113,7 +124,7 @@ function renderRiwayat() {
     box.innerHTML = EMPTY(EMPTY_LIST, 'Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.');
     return;
   }
-  const head = `<div class="lap head"><span>Jam</span><span>Durasi</span>${KEYS.map(k => `<span class="hm">${ICO[k]}${M[k]}</span>`).join('')}<span></span></div>`;
+  const head = `<div class="lap head"><span>Jam</span><span>Durasi</span>${KEYS.map(k => `<span class="hm ${k}">${ICO[k]}${M[k]}</span>`).join('')}<span></span></div>`;
   const groups = {};
   S.sessions.forEach(s => (groups[dayKey(s.start)] = groups[dayKey(s.start)] || []).push(s));
   box.innerHTML = Object.keys(groups).sort().reverse().map(k => {
@@ -220,6 +231,7 @@ function importJSON(file) {
 function showTab(name) {
   $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   ['sesi', 'riwayat', 'ringkasan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
+  const sec = $(`#tab-${name}`); sec.classList.remove('enter'); void sec.offsetWidth; sec.classList.add('enter');
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
 }
@@ -229,9 +241,10 @@ $$('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.data
 $('#btn-main').addEventListener('click', startOrToggle);
 $('#btn-stop').addEventListener('click', stop);
 $('#btn-undo').addEventListener('click', undo);
-$$('.method').forEach(b => b.addEventListener('click', () => tap(b.dataset.m)));
+$$('.method').forEach(b => b.addEventListener('click', e => tap(b.dataset.m, e)));
 $('#btn-export').addEventListener('click', exportJSON);
 $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 renderAll();
+showTab('sesi');
