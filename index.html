@@ -12,30 +12,16 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<!-- drawer menu di HP: murni CSS (checkbox), fx.js hanya menambah tutup-otomatis -->
-<input type="checkbox" id="nav-toggle" class="nav-toggle" aria-label="Buka menu navigasi">
-<label for="nav-toggle" class="hamburger-btn" aria-hidden="true"><span class="hamburger-line"></span><span class="hamburger-line"></span><span class="hamburger-line"></span></label>
-<label for="nav-toggle" class="sidebar-overlay" aria-hidden="true"></label>
-
-<aside class="sidebar-nav" id="sidebar">
-  <div class="sidebar-header">
-    <span class="logo-mark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-    <h2 class="sidebar-title">Tracker Sharelink</h2>
-    <p class="sidebar-subtitle">Journal Sharelink</p>
-  </div>
-  <nav class="tabs" role="tablist" aria-label="Halaman">
-    <button role="tab" data-tab="sesi" aria-selected="true"><span class="sidebar-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg></span><span class="sidebar-label">Sesi</span></button>
-    <button role="tab" data-tab="riwayat" aria-selected="false"><span class="sidebar-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><span class="sidebar-label">Riwayat</span></button>
-    <button role="tab" data-tab="ringkasan" aria-selected="false"><span class="sidebar-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span><span class="sidebar-label">Ringkasan</span></button>
-  </nav>
-  <div class="sidebar-footer">
-    <p>Data tersimpan di browser ini</p>
-    <span>v2.0</span>
-  </div>
-</aside>
-
 <main class="main-content">
 <div class="container">
+
+  <div class="brand-bar">
+    <span class="logo-mark"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+    <div>
+      <p class="brand-name">Tracker Sharelink</p>
+      <p class="brand-sub">Journal Sharelink</p>
+    </div>
+  </div>
 
   <section id="tab-sesi">
     <header class="page-header">
@@ -98,6 +84,15 @@
 
 </div>
 </main>
+
+<!-- dock navigasi bawah: pil meluncur ke tab aktif (murni CSS lewat :has) -->
+<nav class="tabs" role="tablist" aria-label="Halaman">
+  <i class="dock-pill" aria-hidden="true"></i>
+  <button role="tab" data-tab="sesi" aria-selected="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span>Sesi</span></button>
+  <button role="tab" data-tab="riwayat" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Riwayat</span></button>
+  <button role="tab" data-tab="ringkasan" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Ringkasan</span></button>
+</nav>
+
 <script src="script.js"></script>
 <script src="fx.js"></script>
 </body>

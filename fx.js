@@ -1,5 +1,5 @@
 'use strict';
-/* Efek tampilan saja: riak + "+1" melayang saat tap, getar HP, animasi angka, dan tutup otomatis menu di HP.
+/* Efek tampilan saja: riak + "+1" melayang saat tap, getar HP, animasi angka, dan scroll ke atas saat pindah tab.
    Tidak menyentuh data atau logika script.js. Kalau file ini dihapus, aplikasi tetap berfungsi penuh. */
 (function () {
   try {
@@ -34,12 +34,11 @@
       })
     );
 
-    const toggle = document.getElementById('nav-toggle');
-    if (toggle) {
-      document.querySelectorAll('.tabs button').forEach(b =>
-        b.addEventListener('click', () => { toggle.checked = false; window.scrollTo(0, 0); })
-      );
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') toggle.checked = false; });
-    }
+    document.querySelectorAll('.tabs button').forEach(b =>
+      b.addEventListener('click', () => {
+        if (navigator.vibrate) navigator.vibrate(8);
+        window.scrollTo({ top: 0, behavior: calm() ? 'auto' : 'smooth' });
+      })
+    );
   } catch (e) { /* efek opsional */ }
 })();
