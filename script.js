@@ -12,14 +12,6 @@ const pad = n => String(n).padStart(2, '0');
 const sum = arr => arr.reduce((a, b) => a + b, 0);
 const num = (n, d = 1) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: d });
 const zero = () => ({ manual: 0, gpt: 0, claude: 0 });
-const SHAPE = {
-  manual: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/>',
-  gpt: '<circle cx="12" cy="12" r="9"/>',
-  claude: '<path d="M12 3l10 18H2z"/>'
-};
-const ICO = {}; KEYS.forEach(k => ICO[k] = `<svg class="shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE[k]}</svg>`);
-const EMPTY = (path, text) => `<div class="empty"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${path}</svg><p>${text}</p></div>`;
-const EMPTY_LIST = '<path d="M5 6h14M5 12h14M5 18h9"/>', EMPTY_BARS = '<path d="M5 20V11M12 20V4M19 20v-6"/>';
 
 /* ---------- data ---------- */
 function normalize(d) {
@@ -66,29 +58,17 @@ function stop() {
   S.active = null; save();
   renderSesi(); renderRiwayat(); showTab('riwayat');
 }
-function fx(m, e) {
-  const btn = $(`.method[data-m="${m}"]`); if (!btn) return;
-  const n = $('.n', btn); n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
-  const r = btn.getBoundingClientRect();
-  const x = e && e.clientX ? e.clientX - r.left : r.width / 2, y = e && e.clientY ? e.clientY - r.top : r.height / 2;
-  const rip = document.createElement('span'); rip.className = 'rip';
-  rip.style.left = x + 'px'; rip.style.top = y + 'px';
-  btn.append(rip); setTimeout(() => rip.remove(), 700);
-  try { if (navigator.vibrate) navigator.vibrate(18); } catch (err) { /* tidak didukung */ }
-}
-function tap(m, e) {
+function tap(m) {
   const a = S.active; if (!a || !a.resumedAt) return;
-  a.taps.push({ m, t: Date.now() }); save(); renderSesi(); fx(m, e);
+  a.taps.push({ m, t: Date.now() }); save(); renderSesi();
 }
 function undo() {
   const a = S.active; if (!a || !a.taps.length) return;
   a.taps.pop(); save(); renderSesi();
-  try { if (navigator.vibrate) navigator.vibrate(8); } catch (err) { /* tidak didukung */ }
 }
 
 function renderSesi() {
   const a = S.active, running = !!(a && a.resumedAt);
-  document.body.dataset.state = !a ? 'idle' : running ? 'run' : 'pause';
   $('#clock').textContent = fmt(a ? elapsed(a) : 0);
   $('#status').textContent = !a ? 'Belum jalan' : running ? 'Jalan' : 'Dijeda';
   $('#btn-main').textContent = !a ? 'Mulai' : running ? 'Jeda' : 'Lanjut';
@@ -114,17 +94,23 @@ function dayInfo(k) {
 }
 
 function sessionCard(s) {
-  const cells = KEYS.map(k => `<div class="m ${k}"><span class="n">${s.links[k]} link</span><input type="number" inputmode="numeric" min="0" data-order="${k}" aria-label="Pesanan ${M[k]}" value="${s.orders[k]}"></div>`).join('');
-  return `<article class="sess lap" data-id="${s.id}"><strong class="t">${clockOf(s.start)}</strong><span class="dur">${fmt(s.duration)}</span>${cells}<button class="del" data-del aria-label="Hapus sesi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="sr">Hapus</span></button></article>`;
+  const rows = KEYS.map(k => `
+    <div class="m ${k}">
+      <span class="name">${M[k]}</span>
+      <span class="n">${s.links[k]} link</span>
+      <label>Pesanan <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
+    </div>`).join('');
+  return `<article class="sess" data-id="${s.id}">
+    <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="del" data-del>Hapus</button></div>
+    ${rows}</article>`;
 }
 
 function renderRiwayat() {
   const box = $('#riwayat');
   if (!S.sessions.length) {
-    box.innerHTML = EMPTY(EMPTY_LIST, 'Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.');
+    box.innerHTML = '<p class="empty">Belum ada sesi. Selesaikan satu sesi di tab Sesi, hasilnya muncul di sini dan bisa kamu isi pesanannya.</p>';
     return;
   }
-  const head = `<div class="lap head"><span>Jam</span><span>Durasi</span>${KEYS.map(k => `<span class="hm ${k}">${ICO[k]}${M[k]}</span>`).join('')}<span></span></div>`;
   const groups = {};
   S.sessions.forEach(s => (groups[dayKey(s.start)] = groups[dayKey(s.start)] || []).push(s));
   box.innerHTML = Object.keys(groups).sort().reverse().map(k => {
@@ -137,7 +123,7 @@ function renderRiwayat() {
           <input type="number" inputmode="numeric" min="0" data-clicks placeholder="isi" value="${c != null ? c : ''}"></label>
         <p class="dim" data-info>${dayInfo(k)}</p>
       </header>
-      ${head}${list.map(sessionCard).join('')}
+      ${list.map(sessionCard).join('')}
     </section>`;
   }).join('');
 }
@@ -159,8 +145,8 @@ $('#riwayat').addEventListener('change', e => {
   }
 });
 $('#riwayat').addEventListener('click', e => {
-  const del = e.target.closest('[data-del]'); if (!del) return;
-  const id = del.closest('.sess').dataset.id;
+  if (!e.target.matches('[data-del]')) return;
+  const id = e.target.closest('.sess').dataset.id;
   if (!confirm('Hapus sesi ini? Tidak bisa dibatalkan.')) return;
   S.sessions = S.sessions.filter(x => String(x.id) !== id);
   save(); renderRiwayat();
@@ -169,7 +155,7 @@ $('#riwayat').addEventListener('click', e => {
 /* ---------- ringkasan ---------- */
 function renderRingkasan() {
   const box = $('#ringkasan');
-  if (!S.sessions.length) { box.innerHTML = EMPTY(EMPTY_BARS, 'Belum ada data untuk diringkas.'); return; }
+  if (!S.sessions.length) { box.innerHTML = '<p class="empty">Belum ada data untuk diringkas.</p>'; return; }
 
   const t = {}; KEYS.forEach(k => t[k] = { links: 0, orders: 0, sess: 0 });
   let ms = 0;
@@ -183,25 +169,27 @@ function renderRingkasan() {
   let clicks = 0, clickLinks = 0;
   Object.keys(S.dayClicks).forEach(d => { const l = dayLinks(d); if (l) { clicks += S.dayClicks[d]; clickLinks += l; } });
 
-  const rate = k => t[k].links ? t[k].orders / t[k].links * 100 : 0;
-  const max = Math.max(...KEYS.map(rate));
-  // aksen hanya untuk yang unggul, dan hanya kalau minimal dua metode sudah punya sampel cukup
-  const ok = KEYS.filter(k => t[k].links >= MIN_LINKS);
-  const lead = ok.length > 1 ? ok.reduce((b, k) => rate(k) > rate(b) ? k : b) : null;
-  const rows = [...KEYS].sort((a, b) => rate(b) - rate(a)).map((k, i) => {
-    const d = t[k], r = rate(k), w = max ? r / max : 0;
-    return `<div class="rank ${k}${k === lead && r > 0 ? ' lead' : ''}">
-      <div class="top"><span class="pos">${i + 1}</span>${ICO[k]}<span class="name">${M[k]}</span><b class="val">${d.links ? num(r) : '-'}</b></div>
-      <div class="bar"><i style="transform:scaleX(${w})"></i></div>
-      <p class="meta"><span>Sharelink <b>${d.links}</b></span><span>Pesanan <b>${d.orders}</b></span><span>Jumlah sesi memakai metode ini <b>${d.sess}</b></span></p>
-      ${d.links < MIN_LINKS ? `<p class="warn"><b>Sampel kecil.</b> Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
+  const all = `<div class="card all"><h3>Semua sesi</h3>
+    <div class="stat"><span>Jumlah sesi</span><b>${S.sessions.length}</b></div>
+    <div class="stat"><span>Total durasi</span><b>${fmt(ms)}</b></div>
+    <div class="stat"><span>Sharelink</span><b>${links}</b></div>
+    <div class="stat"><span>Sharelink per jam</span><b>${hours > 0 ? num(links / hours) : '-'}</b></div>
+    <div class="stat"><span>Pesanan</span><b>${orders}</b></div>
+    <div class="stat"><span>Klik per sharelink</span><b>${clickLinks ? num(clicks / clickLinks) : 'isi klik harian dulu'}</b></div>
+  </div>`;
+
+  const per = KEYS.map(k => {
+    const d = t[k], small = d.links < MIN_LINKS;
+    return `<div class="card ${k}"><h3>${M[k]}</h3>
+      <div class="stat"><span>Sharelink</span><b>${d.links}</b></div>
+      <div class="stat"><span>Jumlah sesi memakai metode ini</span><b>${d.sess}</b></div>
+      <div class="stat"><span>Pesanan</span><b>${d.orders}</b></div>
+      <div class="stat"><span>Pesanan per 100 sharelink</span><b>${d.links ? num(d.orders / d.links * 100) : '-'}</b></div>
+      ${small ? `<p class="warn">Baru ${d.links} sharelink. Di bawah ${MIN_LINKS}, angkanya masih naik-turun dan belum layak dibandingkan.</p>` : ''}
     </div>`;
   }).join('');
-  const C = (v, l) => `<div class="cell"><b>${v}</b><span>${l}</span></div>`;
-  const cells = C(S.sessions.length, 'Jumlah sesi') + C(fmt(ms), 'Total durasi') + C(links, 'Sharelink') + C(hours > 0 ? num(links / hours) : '-', 'Sharelink per jam') + C(orders, 'Pesanan') + C(clickLinks ? num(clicks / clickLinks) : '-', clickLinks ? 'Klik per sharelink' : 'Klik per sharelink (isi klik harian dulu)');
 
-  box.innerHTML = '<h2 class="sec">Pesanan per 100 sharelink</h2><div class="board">' + rows + '</div><h2 class="sec">Semua sesi</h2><div class="cells">' + cells + '</div>' +
-    `<p class="note">Yang dibandingkan antar metode hanya pesanan per sharelink, karena klik Shopee tidak bisa dipecah per tag. Pesanan tanpa tag dihitung Manual, jadi pesanan dari postingan lama yang tidak tercatat di sini ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya.</p>`;
+  box.innerHTML = all + per + `<p class="note">Yang dibandingkan antar metode hanya pesanan per sharelink, karena klik Shopee tidak bisa dipecah per tag. Pesanan tanpa tag dihitung Manual, jadi pesanan dari postingan lama yang tidak tercatat di sini ikut masuk Manual dan bisa membuatnya tampak lebih bagus dari aslinya.</p>`;
 }
 
 /* ---------- ekspor dan impor ---------- */
@@ -231,7 +219,6 @@ function importJSON(file) {
 function showTab(name) {
   $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
   ['sesi', 'riwayat', 'ringkasan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
-  const sec = $(`#tab-${name}`); sec.classList.remove('enter'); void sec.offsetWidth; sec.classList.add('enter');
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
 }
@@ -241,10 +228,9 @@ $$('.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.data
 $('#btn-main').addEventListener('click', startOrToggle);
 $('#btn-stop').addEventListener('click', stop);
 $('#btn-undo').addEventListener('click', undo);
-$$('.method').forEach(b => b.addEventListener('click', e => tap(b.dataset.m, e)));
+$$('.method').forEach(b => b.addEventListener('click', () => tap(b.dataset.m)));
 $('#btn-export').addEventListener('click', exportJSON);
 $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 renderAll();
-showTab('sesi');
