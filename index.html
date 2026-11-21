@@ -37,10 +37,15 @@
       </div>
       <div class="clock" id="clock" aria-live="off">00:00:00</div>
       <p class="hint" id="hint">Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.</p>
+      <div class="idle" id="idle" role="alert" hidden>
+        <p id="idle-text"></p>
+        <div class="ctrls"><button id="idle-pause" class="ghost">Jeda sekarang</button><button id="idle-ok" class="ghost">Masih posting</button></div>
+      </div>
       <div class="ctrls">
         <button id="btn-main" class="primary">Mulai</button>
         <button id="btn-stop" class="ghost" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>Selesai</button>
       </div>
+      <button id="btn-edit" class="ghost small" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edit waktu sesi</button>
     </div>
 
     <div class="dashboard-card">
@@ -54,6 +59,14 @@
         <button class="method claude" data-m="claude"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="name">IMAGE CLAUDE</span><span class="n" data-n="claude">0</span></button>
       </div>
       <button id="btn-undo" class="ghost small"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Batalkan tap terakhir</button>
+    </div>
+
+    <div class="dashboard-card" id="log-card" hidden>
+      <div class="card-header">
+        <span class="card-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg></span>
+        <span>Log waktu (WIB)</span>
+      </div>
+      <ol class="log" id="log"></ol>
     </div>
   </section>
 
@@ -92,6 +105,20 @@
   <button role="tab" data-tab="riwayat" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Riwayat</span></button>
   <button role="tab" data-tab="ringkasan" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Ringkasan</span></button>
 </nav>
+
+<dialog id="dlg-edit" aria-labelledby="dlg-title">
+  <form id="form-edit" autocomplete="off">
+    <h3 id="dlg-title">Edit waktu sesi</h3>
+    <p class="dim">Isi durasi yang benar. Perubahan ini tercatat di log.</p>
+    <div class="hms">
+      <label><input id="e-h" type="number" inputmode="numeric" min="0" max="24" aria-label="Jam"><span>jam</span></label>
+      <label><input id="e-m" type="number" inputmode="numeric" min="0" max="59" aria-label="Menit"><span>menit</span></label>
+      <label><input id="e-s" type="number" inputmode="numeric" min="0" max="59" aria-label="Detik"><span>detik</span></label>
+    </div>
+    <p class="dlg-err" id="edit-err" role="alert"></p>
+    <div class="ctrls"><button type="button" id="edit-cancel" class="ghost">Batal</button><button type="submit" class="dlg-save">Simpan</button></div>
+  </form>
+</dialog>
 
 <script src="script.js"></script>
 <script src="fx.js"></script>

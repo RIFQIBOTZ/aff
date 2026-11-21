@@ -311,3 +311,34 @@ input[type=number]::placeholder{color:var(--muted);font:500 .95rem var(--font);o
   .tabs{transform:translateX(-50%)}
   .timer-card::before{opacity:0!important}
 }
+
+/* ---------- tambahan: peringatan idle, log WIB, edit waktu ---------- */
+.idle{margin-top:16px;padding:14px 16px;border-radius:18px;background:rgba(255,178,58,.1);border:1px solid rgba(255,178,58,.4)}
+.idle p{color:#ffd08a;font-size:.86rem;line-height:1.55}
+.idle .ctrls{margin-top:12px}
+.idle .ctrls button{min-height:46px;font-size:.82rem}
+.log{list-style:none;padding:0;display:grid}
+.log li{--c:var(--muted);display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"dot lab time" "dot det det";column-gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+.log li:first-child{border-top:0}
+.log li::before{content:"";grid-area:dot;align-self:center;width:9px;height:9px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c)}
+.log li.start,.log li.resume{--c:var(--mint)}.log li.pause{--c:var(--amber)}.log li.stop{--c:var(--lime)}.log li.edit{--c:var(--sky)}
+.log b{grid-area:lab;font-size:.84rem;font-weight:600;color:var(--c)}
+.log time{grid-area:time;font:600 .78rem var(--mono);color:var(--text)}
+.log span{grid-area:det;color:var(--muted);font:500 .74rem var(--mono)}
+.sess .row{flex-wrap:wrap}
+.edit{min-height:40px;padding:0 14px;border-radius:12px;font-size:.8rem;font-weight:600;color:var(--sky);background:rgba(82,214,255,.08);border:1px solid rgba(82,214,255,.35);transition:transform .4s var(--spring)}
+.edit:active{transform:scale(.92)}
+.logbox{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}
+.logbox summary{cursor:pointer;list-style:none;padding:8px 0;color:var(--muted);font:600 .74rem var(--mono);letter-spacing:.08em}
+.logbox summary::-webkit-details-marker{display:none}
+.logbox summary::before{content:"+ ";color:var(--lime)}
+.logbox[open] summary::before{content:"- "}
+dialog{margin:auto;width:min(calc(100% - 32px),360px);padding:22px 20px;border-radius:24px;border:1px solid var(--line2);color:var(--text);background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.015)),var(--surface);box-shadow:0 30px 70px rgba(0,0,0,.7)}
+dialog::backdrop{background:rgba(2,8,6,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+dialog h3{display:block;margin-bottom:8px;color:var(--lime);font:600 .8rem var(--mono);text-transform:uppercase;letter-spacing:.16em}
+.hms{display:flex;gap:10px;margin-top:16px}
+.hms label{flex:1;display:grid;gap:6px;text-align:center;color:var(--muted);font-size:.8rem}
+.hms input{width:100%;text-align:center}
+.dlg-err{min-height:1.4em;margin-top:10px;color:#ff8a9c;font-size:.82rem}
+dialog .ctrls{margin-top:6px}
+.dlg-save{color:var(--ink);font-weight:700;background:linear-gradient(110deg,var(--lime),var(--mint))}
