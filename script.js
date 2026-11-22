@@ -359,7 +359,7 @@ const API = {
   state() {
     sync();
     const a = S.active, counts = a ? tapCounts(a) : zero();
-    return { active: !!a, running: !!(a && a.resumedAt), elapsed: a ? elapsed(a) : 0, counts, total: sum(KEYS.map(k => counts[k])) };
+    return { active: !!a, running: !!(a && a.resumedAt), elapsed: a ? elapsed(a) : 0, counts, total: sum(KEYS.map(k => counts[k])), last: a && a.taps.length ? a.taps[a.taps.length - 1].m : null };
   },
   main() {
     sync();
@@ -371,6 +371,7 @@ const API = {
     return API.state();
   },
   tap(m) { if (KEYS.includes(m)) tap(m); return API.state(); },
+  undo() { undo(); return API.state(); },
   stopNow() { finishSession(); return API.state(); }
 };
 window.trackerAPI = API;
