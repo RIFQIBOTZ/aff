@@ -89,13 +89,16 @@ function stop() {
   sync();
   if (!S.active) { renderSesi(); return; }
   if (!confirm('Akhiri sesi ini dan simpan ke Riwayat?')) return;
+  if (finishSession()) { renderRiwayat(); showTab('riwayat'); }
+}
+function finishSession() {
   sync();
-  const a = S.active; if (!a) { renderSesi(); return; }
+  const a = S.active; if (!a) { renderSesi(); return false; }
   const now = Date.now();
   logEv(a, 'stop', now);
   S.sessions.push({ id: a.id, start: a.startedAt, duration: elapsed(a, now), links: tapCounts(a), orders: zero(), log: a.log });
-  S.active = null; save();
-  renderSesi(); renderRiwayat(); showTab('riwayat');
+  S.active = null; save(); renderSesi();
+  return true;
 }
 function tap(m) {
   sync();
@@ -301,7 +304,12 @@ function renderRingkasan() {
 
 /* ---------- ekspor dan impor ---------- */
 function exportJSON() {
-  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const json = JSON.stringify(S, null, 2), fname = `sharelink-tracker-${dayKey(Date.now())}.json`;
+  if (window.AndroidBridge && AndroidBridge.saveFile) { // di dalam app Android, unduhan blob tidak jalan
+    if (!AndroidBridge.saveFile(fname, json)) alert('Gagal menyimpan file ke folder Download.');
+    return;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `sharelink-tracker-${dayKey(Date.now())}.json`;
@@ -344,5 +352,42 @@ $$('.method').forEach(b => b.addEventListener('click', () => tap(b.dataset.m)));
 $('#btn-export').addEventListener('click', exportJSON);
 $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
+
+
+/* ---------- jembatan untuk app Android (gelembung melayang) ---------- */
+const API = {
+  state() {
+    sync();
+    const a = S.active, counts = a ? tapCounts(a) : zero();
+    return { active: !!a, running: !!(a && a.resumedAt), elapsed: a ? elapsed(a) : 0, counts, total: sum(KEYS.map(k => counts[k])) };
+  },
+  main() {
+    sync();
+    const a = S.active, now = Date.now();
+    if (!a) { S.active = { id: now, startedAt: now, acc: 0, resumedAt: now, taps: [], log: [] }; logEv(S.active, 'start', now); }
+    else if (a.resumedAt) doPause(a, now);
+    else { a.resumedAt = now; logEv(a, 'resume', now); }
+    idleSnooze = 0; save(); renderSesi();
+    return API.state();
+  },
+  tap(m) { if (KEYS.includes(m)) tap(m); return API.state(); },
+  stopNow() { finishSession(); return API.state(); }
+};
+window.trackerAPI = API;
+
+if (window.AndroidBridge) { // tombol gelembung hanya muncul di dalam app Android
+  const btn = $('#btn-bubble'), msg = $('#bubble-msg');
+  const paint = on => { btn.dataset.on = on ? '1' : '0'; btn.textContent = on ? 'Matikan gelembung' : 'Aktifkan gelembung'; };
+  $('#bubble-box').hidden = false;
+  try { paint(AndroidBridge.isBubbleEnabled()); } catch (e) { paint(false); }
+  btn.addEventListener('click', () => {
+    let r = 'error';
+    try { r = AndroidBridge.setBubble(btn.dataset.on !== '1'); } catch (e) { /* abaikan */ }
+    if (r === 'need_permission') msg.textContent = 'Izinkan "Tampil di atas aplikasi lain" untuk app ini, lalu kembali ke sini dan tekan tombol lagi.';
+    else if (r === 'on') { paint(true); msg.textContent = 'Gelembung aktif. Tap sekali untuk memunculkan, tap kedua untuk membuka panel.'; }
+    else if (r === 'off') { paint(false); msg.textContent = 'Gelembung dimatikan.'; }
+    else msg.textContent = 'Gagal mengubah gelembung.';
+  });
+}
 
 renderAll();
