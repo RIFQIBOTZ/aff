@@ -59,3 +59,11 @@
 .an-how{margin:6px 0 20px;color:var(--muted);font-size:.84rem}
 .an-how summary{cursor:pointer;padding:8px 0;color:var(--text);font-weight:600}
 .an-how ul{padding-left:18px;display:grid;gap:6px;line-height:1.5}
+
+.auto-tag{margin-left:6px;padding:1px 6px;border-radius:99px;background:rgba(82,214,255,.14);color:var(--sky);font:600 .62rem var(--mono);letter-spacing:.04em;vertical-align:middle}
+.an-meth.m-3dmark{--c:var(--amber)}.an-meth.m-cooler{--c:var(--mint)}.an-meth.m-x{--c:var(--danger)}
+.an-alias{display:flex;align-items:center;gap:10px;margin-top:8px;color:var(--muted);font-size:.8rem}
+.an-alias select{flex:1;min-height:42px;padding:6px 10px;border-radius:12px;border:1px solid var(--line2);background:rgba(0,0,0,.3);color:var(--text);font:inherit;color-scheme:dark}
+.an-meth .an-sub{margin-top:2px}
+.st.unpaid{background:rgba(255,255,255,.1);color:var(--muted)}
+.an-unk{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line2)}
