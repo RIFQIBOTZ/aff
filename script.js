@@ -40,9 +40,12 @@ function normalize(d) {
       duration: +s.duration || 0,
       links: clean(s.links),
       orders: clean(s.orders),
-      log: cleanLog(s.log)
+      log: cleanLog(s.log),
+      ov: s.ov && typeof s.ov === 'object' ? s.ov : {},
+      auto: s.auto && typeof s.auto === 'object' ? s.auto : {}
     })),
-    dayClicks: (d && d.dayClicks && typeof d.dayClicks === 'object') ? d.dayClicks : {}
+    dayClicks: (d && d.dayClicks && typeof d.dayClicks === 'object') ? d.dayClicks : {},
+    dayAuto: (d && d.dayAuto && typeof d.dayAuto === 'object') ? d.dayAuto : {}
   };
 }
 function load() {
@@ -98,6 +101,7 @@ function finishSession() {
   logEv(a, 'stop', now);
   S.sessions.push({ id: a.id, start: a.startedAt, duration: elapsed(a, now), links: tapCounts(a), orders: zero(), log: a.log });
   S.active = null; save(); renderSesi();
+  try { if (window.Analisis && Analisis.syncRiwayat) Analisis.syncRiwayat(); } catch (e) { /* jangan ganggu penutupan sesi */ }
   return true;
 }
 function tap(m) {
@@ -203,7 +207,7 @@ function sessionCard(s) {
     <div class="m ${k}">
       <span class="name">${M[k]}</span>
       <span class="n">${s.links[k]} link</span>
-      <label>Pesanan <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
+      <label>Pesanan${s.auto && s.auto[k] != null && !(s.ov && s.ov[k]) ? '<small class="auto-tag">CSV</small>' : ''} <input type="number" inputmode="numeric" min="0" data-order="${k}" value="${s.orders[k]}"></label>
     </div>`).join('');
   return `<article class="sess" data-id="${s.id}">
     <div class="row"><strong>${clockOf(s.start)}</strong><span>${fmt(s.duration)}</span><button class="edit" data-edit aria-label="Edit waktu sesi">Edit</button><button class="del" data-del>Hapus</button></div>
@@ -242,11 +246,13 @@ $('#riwayat').addEventListener('change', e => {
   if (inp.matches('[data-clicks]')) {
     const v = parseInt(inp.value, 10);
     if (isNaN(v) || v < 0) delete S.dayClicks[k]; else S.dayClicks[k] = v;
+    delete S.dayAuto[k];
     save(); $('[data-info]', day).textContent = dayInfo(k);
   } else if (inp.matches('[data-order]')) {
     const s = S.sessions.find(x => String(x.id) === inp.closest('.sess').dataset.id);
     if (!s) return;
     s.orders[inp.dataset.order] = Math.max(0, parseInt(inp.value, 10) || 0);
+    (s.ov = s.ov || {})[inp.dataset.order] = true;
     inp.value = s.orders[inp.dataset.order];
     save();
   }
@@ -355,6 +361,8 @@ $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 
+const WEB_BUILD = '2026-11-24c'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
+
 /* ---------- jembatan untuk app Android (gelembung melayang) ---------- */
 const API = {
   state() {
@@ -389,6 +397,19 @@ if (window.AndroidBridge) { // tombol gelembung hanya muncul di dalam app Androi
     else if (r === 'on') { paint(true); msg.textContent = 'Gelembung aktif. Tap sekali untuk memunculkan, tap kedua untuk membuka panel.'; }
     else if (r === 'off') { paint(false); msg.textContent = 'Gelembung dimatikan.'; }
     else msg.textContent = 'Gagal mengubah gelembung.';
+  });
+}
+
+
+if (window.AndroidBridge && 'refreshApp' in AndroidBridge) { // tombol pembaruan hanya di app Android versi baru
+  $('#update-box').hidden = false;
+  $('#update-ver').textContent = 'Versi web: ' + WEB_BUILD;
+  $('#btn-update').addEventListener('click', async () => {
+    $('#btn-update').disabled = true;
+    $('#update-ver').textContent = 'Memuat versi terbaru...';
+    try { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); } catch (e) { /* tanpa service worker */ }
+    try { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } catch (e) { /* tanpa Cache Storage */ }
+    AndroidBridge.refreshApp(); // hapus cache HTTP di sisi app lalu muat ulang; localStorage tidak disentuh
   });
 }
 
