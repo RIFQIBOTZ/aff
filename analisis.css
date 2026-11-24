@@ -1,0 +1,61 @@
+/* Tab Analisis. Memakai variabel dari style.css; dock jadi 4 tab. */
+.tabs{grid-template-columns:repeat(4,1fr)}
+.dock-pill{width:calc((100% - 16px)/4)}
+.tabs:has(button:nth-of-type(4)[aria-selected="true"]){--idx:3}
+
+#analisis .an-card{margin-bottom:14px}
+#analisis .ctrls{margin:12px 0 4px}
+.an-msg{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:6px;font-size:.84rem;line-height:1.5}
+.an-msg li{padding:8px 12px;border-radius:12px;background:rgba(44,245,176,.08);color:var(--mint)}
+.an-msg li.bad{background:rgba(255,77,106,.1);color:#ff8a9c}
+.an-store{margin-top:12px}
+.an-link{color:var(--sky);text-decoration:underline;font-size:inherit;padding:2px 0 2px 6px}
+
+.an-chips{display:flex;gap:8px;margin:12px 0}
+.an-chips button{flex:1;min-height:42px;border-radius:14px;border:1px solid var(--line2);color:var(--muted);font-size:.84rem;font-weight:600;transition:background .3s,color .3s}
+.an-chips button[aria-pressed="true"]{background:linear-gradient(120deg,var(--lime),var(--mint));color:var(--ink);border-color:transparent}
+.an-dates{display:flex;gap:10px;margin-bottom:8px}
+.an-dates label{flex:1;display:grid;gap:6px;color:var(--muted);font-size:.78rem}
+.an-dates input{width:100%;min-height:44px;padding:8px 10px;border-radius:12px;border:1px solid var(--line2);background:rgba(0,0,0,.3);color:var(--text);font:500 .9rem var(--mono);color-scheme:dark}
+
+.an-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.an-kpi{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);display:grid;gap:2px}
+.an-kpi small{color:var(--muted);font-size:.74rem;letter-spacing:.04em}
+.an-kpi b{font:700 1.35rem var(--mono);color:var(--lime);font-variant-numeric:tabular-nums}
+.an-kpi span{color:var(--muted);font-size:.72rem;line-height:1.35}
+.an-ins{margin:14px 0 0;padding:0;list-style:none;display:grid;gap:8px}
+.an-ins li{padding:10px 12px;border-radius:12px;background:rgba(82,214,255,.07);border-left:3px solid var(--sky);font-size:.84rem;line-height:1.5}
+
+.an-meth{margin-top:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:5px solid var(--c,var(--muted))}
+.an-meth.m-manual{--c:var(--manual)}.an-meth.m-gpt{--c:var(--gpt)}.an-meth.m-claude{--c:var(--claude)}
+.an-mh{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.an-mh b{color:var(--c,var(--text))}
+.an-mh span,.an-sub{color:var(--muted);font-size:.76rem;line-height:1.5}
+.an-mg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0 6px}
+.an-mg small{display:block;color:var(--muted);font-size:.7rem}
+.an-mg b{font:700 1rem var(--mono);font-variant-numeric:tabular-nums}
+.an-card>.dim{margin-top:10px}
+
+.an-bars{display:flex;align-items:flex-end;gap:3px;height:76px;margin-top:8px}
+.an-bars i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,var(--mint),var(--lime));min-height:2px;opacity:.9}
+.an-axis{display:flex;justify-content:space-between;color:var(--muted);font:500 .68rem var(--mono);margin-top:4px}
+
+.an-list{list-style:none;padding:0;margin:6px 0 0}
+.an-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.86rem}
+.an-list li:first-child{border-top:0}
+.an-list li span{min-width:0;overflow-wrap:anywhere}
+.an-list li b{font:600 .8rem var(--mono);text-align:right;flex:none;color:var(--text)}
+
+.st{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.72rem;font-weight:600}
+.st.ok{background:rgba(44,245,176,.14);color:var(--mint)}
+.st.wait{background:rgba(255,178,58,.14);color:var(--amber)}
+.st.bad{background:rgba(255,77,106,.14);color:#ff8a9c}
+.an-orders{list-style:none;padding:0;margin:6px 0 0}
+.an-orders li{padding:10px 0;border-top:1px solid var(--line)}
+.an-orders li:first-child{border-top:0}
+.an-ot{font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.an-om{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:4px;color:var(--muted);font-size:.76rem}
+.an-om b{margin-left:auto;color:var(--lime);font:700 .85rem var(--mono)}
+.an-how{margin:6px 0 20px;color:var(--muted);font-size:.84rem}
+.an-how summary{cursor:pointer;padding:8px 0;color:var(--text);font-weight:600}
+.an-how ul{padding-left:18px;display:grid;gap:6px;line-height:1.5}

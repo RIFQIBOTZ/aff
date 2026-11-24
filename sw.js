@@ -1,7 +1,7 @@
 "use strict";
 // Network-first: selalu coba ambil versi terbaru, cache hanya cadangan saat offline.
 const CACHE = "sharelink-v1";
-const FILES = ["./", "index.html", "style.css", "script.js", "fx.js", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
+const FILES = ["./", "index.html", "style.css", "script.js", "fx.js", "analisis.js", "analisis.css", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

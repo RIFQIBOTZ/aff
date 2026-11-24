@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600..800&family=Sora:wght@400..700&display=swap">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="analisis.css">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -106,6 +107,14 @@
     </div>
   </section>
 
+  <section id="tab-analisis" hidden>
+    <header class="page-header">
+      <h1><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg> <span class="grad">Analisis Performa</span></h1>
+      <p>Impor laporan Shopee, lalu evaluasi hasilnya</p>
+    </header>
+    <div id="analisis"></div>
+  </section>
+
 </div>
 </main>
 
@@ -115,6 +124,7 @@
   <button role="tab" data-tab="sesi" aria-selected="true"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><span>Sesi</span></button>
   <button role="tab" data-tab="riwayat" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Riwayat</span></button>
   <button role="tab" data-tab="ringkasan" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Ringkasan</span></button>
+  <button role="tab" data-tab="analisis" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg><span>Analisis</span></button>
 </nav>
 
 <dialog id="dlg-edit" aria-labelledby="dlg-title">
@@ -132,6 +142,7 @@
 </dialog>
 
 <script src="script.js"></script>
+<script src="analisis.js"></script>
 <script src="fx.js"></script>
 <script>if("serviceWorker"in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
 </body>

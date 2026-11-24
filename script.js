@@ -333,9 +333,10 @@ function importJSON(file) {
 /* ---------- tab dan event ---------- */
 function showTab(name) {
   $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-  ['sesi', 'riwayat', 'ringkasan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
+  ['sesi', 'riwayat', 'ringkasan', 'analisis'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
+  if (name === 'analisis' && typeof renderAnalisis === 'function') renderAnalisis();
 }
 function renderAll() { renderSesi(); renderRiwayat(); renderRingkasan(); }
 
