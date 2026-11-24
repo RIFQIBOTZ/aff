@@ -256,7 +256,7 @@ function importCard(st) {
   return card('M12 21V9M7 14l5-5 5 5M5 3h14', 'Impor laporan Shopee', `
     <p class="dim">Pilih Laporan Klik dan Laporan Komisi (CSV) sekaligus. Impor ulang aman: klik yang sama dilewati, status pesanan diperbarui.</p>
     <div class="ctrls"><button class="ghost" data-an="pick">Pilih file CSV</button></div>
-    <input type="file" id="an-file" accept=".csv,text/csv,text/comma-separated-values,application/vnd.ms-excel" multiple hidden>
+    <input type="file" id="an-file" multiple hidden>
     ${m ? `<ul class="an-msg">${m}</ul>` : ''}
     <p class="dim an-store">Tersimpan: ${st.clicks.length} klik, ${no} pesanan (${kb} KB). Data ini bisa diimpor ulang dari CSV Shopee, jadi tidak ikut Ekspor JSON.
       ${st.clicks.length || no ? '<button class="an-link" data-an="clear">Hapus data laporan</button>' : ''}</p>`);
