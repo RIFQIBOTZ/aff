@@ -100,3 +100,9 @@
 .an-meth.m-koleksi{--c:var(--koleksi)}
 .an-meth.m-cooler{--c:var(--mint)}
 .an-meth.m-3dmark{--c:var(--coral)}
+
+/* ---------- kartu timer: undo tepat di atas "Edit waktu sesi" ---------- */
+#btn-undo + #btn-edit{margin-top:10px}
+/* metode keempat (KOLEKSI): animasi masuk berurutan dan 4 kolom di layar lebar */
+#tab-sesi .methods>.method:nth-child(4){animation-delay:.46s}
+@media (min-width:900px){#tab-sesi .methods{grid-template-columns:repeat(4,1fr)}}

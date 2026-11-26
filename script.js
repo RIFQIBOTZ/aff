@@ -361,7 +361,7 @@ $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 
-const WEB_BUILD = '2026-11-25b'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
+const WEB_BUILD = '2026-11-26a'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
 
 /* ---------- jembatan untuk app Android (gelembung melayang) ---------- */
 const API = {
