@@ -4,9 +4,10 @@
 'use strict';
 const RK = 'sharelink-reports-v1';
 const TZ = 7 * 3600;
-const MNAME = { manual: 'Manual', gpt: 'IMAGE GPT', claude: 'IMAGE CLAUDE', '3dmark': '3DMARK (website)', cooler: 'COOLER (website)' };
-const SESS = ['manual', 'gpt', 'claude']; // metode yang dicatat per sesi di Riwayat
-const KNOWN = { GPT: 'gpt', CLAUDE: 'claude', '3DMARK': '3dmark', COOLER: 'cooler' };
+const MNAME = { manual: 'Manual', gpt: 'IMAGE GPT', claude: 'IMAGE CLAUDE', koleksi: 'KOLEKSI', cooler: 'WEBSITE COOLER', '3dmark': 'WEBSITE 3DMARK' };
+const SESS = ['manual', 'gpt', 'claude', 'koleksi']; // metode yang dicatat per sesi di Riwayat
+const zeroS = () => Object.fromEntries(SESS.map(k => [k, 0]));
+const KNOWN = { GPT: 'gpt', CLAUDE: 'claude', KOLEKSI: 'koleksi', '3DMARK': '3dmark', COOLER: 'cooler' };
 const label = k => MNAME[k] || (String(k).startsWith('x:') ? 'Tag tidak dikenali: ' + k.slice(2) : k);
 /* Tag mentah -> kunci metode. Kosong = manual. Tag asing tidak dibuang: jadi 'x:TAG' supaya terlihat, bisa digabung lewat alias. */
 function tagKey(raw, alias) {
@@ -16,8 +17,9 @@ function tagKey(raw, alias) {
   const n = t.replace(/[^A-Z0-9]/g, '');
   if (/GPT/.test(n)) return 'gpt';
   if (/CLAUDE/.test(n)) return 'claude';
-  if (n === '3DMARK') return '3dmark';
+  if (/KOLEKSI/.test(n)) return 'koleksi';
   if (n === 'COOLER') return 'cooler';
+  if (n.length >= 4 && lev(n, '3DMARK') <= 2) return '3dmark'; // salah ketik 3DMARK ikut kategori WEBSITE 3DMARK
   return 'x:' + t;
 }
 function lev(a, b) {
@@ -170,11 +172,11 @@ function syncRiwayat(opt) {
     const t = o.tC != null ? o.tC : o.tO, list = byDay[dayOf(t)];
     if (!list) { res.noSession++; continue; }
     const s = pickSession(list, t);
-    if (!auto.has(s)) auto.set(s, { manual: 0, gpt: 0, claude: 0 });
+    if (!auto.has(s)) auto.set(s, zeroS());
     auto.get(s)[k]++; res.placed++;
   }
   S.sessions.forEach(s => {
-    const a = auto.get(s) || { manual: 0, gpt: 0, claude: 0 };
+    const a = auto.get(s) || zeroS();
     SESS.forEach(k => {
       if (s.ov && s.ov[k]) return;
       const had = s.auto && s.auto[k] != null;
@@ -226,11 +228,11 @@ function compute(st, sessions, rng) {
   R.conv = R.clicks ? R.cohort / R.clicks : null;
   R.ci = wilson(R.cohort, R.clicks);
 
-  const keys = new Set(['manual', 'gpt', 'claude']);
+  const keys = new Set([...SESS, 'cooler', '3dmark']); // kartu ini selalu tampil, walau datanya 0
   clicks.forEach(c => keys.add(key(st.tags[c[2]])));
   cohort.forEach(o => keys.add(key(o.tag)));
   const sess = sessions.filter(s => clickDays.has(dayOf(Math.floor(s.start / 1000)))); // hanya tanggal yang ada data kliknya
-  const ord = ['manual', 'gpt', 'claude', '3dmark', 'cooler'], rank = k => (ord.indexOf(k) < 0 ? 99 : ord.indexOf(k));
+  const ord = ['manual', 'gpt', 'claude', 'koleksi', 'cooler', '3dmark'], rank = k => (ord.indexOf(k) < 0 ? 99 : ord.indexOf(k));
   R.methods = [...keys].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).map(k => {
     const cl = clicks.filter(c => key(st.tags[c[2]]) === k).length, co = cohort.filter(o => key(o.tag) === k);
     return { key: k, clicks: cl, orders: co.length, comm: sumBy(co, o => o.net), conv: cl ? co.length / cl : null, ci: wilson(co.length, cl), links: SESS.includes(k) ? sumBy(sess, s => s.links[k] || 0) : null };
@@ -293,7 +295,7 @@ function insights(R) {
     if (miss.length) out.push(`Tidak ada data klik pada ${miss.join(', ')} di tengah rentang. Kalau itu bukan hari tanpa klik, impor laporan klik tanggal tersebut.`);
   }
   if (man && man.clicks >= 30) {
-    R.methods.filter(m => (m.key === 'gpt' || m.key === 'claude') && m.clicks).forEach(m => {
+    R.methods.filter(m => ['gpt', 'claude', 'koleksi'].includes(m.key) && m.clicks).forEach(m => {
       if (m.clicks < 30) out.push(`${label(m.key)}: baru ${m.clicks} klik, masih terlalu sedikit untuk dibandingkan dengan Manual.`);
       else if (m.ci[0] > man.ci[1]) out.push(`${label(m.key)}: konversinya lebih tinggi dari Manual, dan rentang keyakinan 95% keduanya tidak tumpang tindih.`);
       else if (m.ci[1] < man.ci[0]) out.push(`${label(m.key)}: konversinya lebih rendah dari Manual, dan rentang keyakinan 95% keduanya tidak tumpang tindih.`);
@@ -365,13 +367,13 @@ function rangeCard(b) {
     <p class="dim">Data tersedia ${dmy(b.min)} sampai ${dmy(b.max)}.</p>`);
 }
 
-const KEYTAG = { manual: 'kosong', gpt: 'GPT', claude: 'CLAUDE', '3dmark': '3DMARK', cooler: 'COOLER' };
-const aliasOpts = sug => [['manual', 'Manual'], ['gpt', 'IMAGE GPT'], ['claude', 'IMAGE CLAUDE'], ['3dmark', '3DMARK (website)'], ['cooler', 'COOLER (website)']]
+const KEYTAG = { manual: 'kosong', gpt: 'GPT', claude: 'CLAUDE', koleksi: 'KOLEKSI', '3dmark': '3DMARK', cooler: 'COOLER' };
+const aliasOpts = sug => [['manual', 'Manual'], ['gpt', 'IMAGE GPT'], ['claude', 'IMAGE CLAUDE'], ['koleksi', 'KOLEKSI'], ['cooler', 'WEBSITE COOLER'], ['3dmark', 'WEBSITE 3DMARK']]
   .map(([v, t]) => `<option value="${v}">${t}${v === sug ? ' (saran)' : ''}</option>`).join('');
 
 function methodsCard(R) {
-  const rows = R.methods.map(m => `<div class="an-meth m-${esc(m.key)}"><div class="an-mh"><b>${esc(label(m.key))}</b><span>${SESS.includes(m.key) ? m.links + ' sharelink dicatat' : 'link di website'}</span></div>
-    <p class="an-sub">Tag di Shopee: ${esc(KEYTAG[m.key] || m.key)}${m.key === 'manual' ? ' (termasuk tag tidak dikenali)' : ''}</p>
+  const rows = R.methods.map(m => `<div class="an-meth m-${esc(m.key)}"><div class="an-mh"><b>${esc(label(m.key))}</b><span>${SESS.includes(m.key) ? m.links + ' sharelink dicatat' : ''}</span></div>
+    <p class="an-sub">Tag di Shopee: ${esc(KEYTAG[m.key] || m.key)}${m.key === 'manual' ? ' (termasuk tag tidak dikenali)' : m.key === '3dmark' ? ' (termasuk salah ketik)' : ''}</p>
     <div class="an-mg"><div><small>Klik</small><b>${m.clicks}</b></div><div><small>Pesanan</small><b>${m.orders}</b></div>
     <div><small>Konversi</small><b>${m.conv == null ? '-' : pc(m.conv)}</b></div><div><small>Komisi</small><b>${rp(m.comm)}</b></div></div>
     <p class="an-sub">${m.clicks ? `Rentang 95%: ${pc(m.ci[0])} sampai ${pc(m.ci[1])}. Komisi per klik ${rp(m.comm / m.clicks)}.` : 'Belum ada klik pada rentang ini.'}${m.links && m.clicks ? ` Klik per sharelink ${nf(m.clicks / m.links)}.` : ''}</p>
@@ -414,7 +416,7 @@ function body(R, b) {
       (R.orders.length > 12 ? `<div class="ctrls"><button class="ghost" data-an="more">${showAll ? 'Ringkas' : 'Tampilkan semua'}</button></div>` : '')) +
     `<details class="an-how"><summary>Cara menghitung</summary><ul>
       <li>Waktu di laporan Shopee dianggap WIB.</li>
-      <li>Metode dibaca dari Tag link: kosong berarti Manual, GPT berarti IMAGE GPT, CLAUDE berarti IMAGE CLAUDE, 3DMARK dan COOLER berarti link di website. Tag lain tampil sebagai tidak dikenali dan bisa digabung kalau itu typo.</li>
+      <li>Metode dibaca dari Tag link: kosong berarti Manual, GPT berarti IMAGE GPT, CLAUDE berarti IMAGE CLAUDE, KOLEKSI berarti KOLEKSI, COOLER berarti WEBSITE COOLER, 3DMARK (termasuk salah ketiknya) berarti WEBSITE 3DMARK. Tag lain tampil sebagai tidak dikenali dan bisa digabung kalau itu typo.</li>
       <li>Riwayat diisi menurut tanggal klik, ke sesi yang jam-nya paling dekat dengan jam klik. Total per hari akurat, pembagian antar sesi hanya perkiraan. Pesanan bertag website tidak masuk Riwayat.</li>
       <li>Konversi memakai pesanan yang klik-nya jatuh pada tanggal klik yang sudah diimpor, supaya pembilang dan penyebutnya satu periode.</li>
       <li>Rentang 95% memakai interval Wilson. Kalau dua rentang tumpang tindih, selisihnya belum bisa dianggap nyata.</li>

@@ -1,7 +1,7 @@
 'use strict';
 
 const KEY = 'sharelink-tracker-v1';
-const M = { manual: 'Manual', gpt: 'IMAGE GPT', claude: 'IMAGE CLAUDE' };
+const M = { manual: 'Manual', gpt: 'IMAGE GPT', claude: 'IMAGE CLAUDE', koleksi: 'KOLEKSI' };
 const KEYS = Object.keys(M);
 const MIN_LINKS = 30; // patokan kasar: di bawah ini sampel dianggap terlalu kecil
 const IDLE_MIN = 20; // menit tanpa catatan sharelink sebelum muncul peringatan
@@ -14,7 +14,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const pad = n => String(n).padStart(2, '0');
 const sum = arr => arr.reduce((a, b) => a + b, 0);
 const num = (n, d = 1) => Number(n).toLocaleString('id-ID', { maximumFractionDigits: d });
-const zero = () => ({ manual: 0, gpt: 0, claude: 0 });
+const zero = () => ({ manual: 0, gpt: 0, claude: 0, koleksi: 0 });
 
 /* ---------- data ---------- */
 function cleanLog(l) {
@@ -178,7 +178,6 @@ function renderSesi() {
   KEYS.forEach(k => { $(`[data-n="${k}"]`).textContent = c[k]; });
   $$('.method').forEach(b => b.disabled = !running);
   $('#btn-undo').disabled = !a || !a.taps.length;
-  $('#undo-label').textContent = a && a.taps.length ? 'Batalkan tap terakhir: ' + M[a.taps[a.taps.length - 1].m] : 'Batalkan tap terakhir';
   $('#hint').textContent = !a
     ? 'Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.'
     : running ? `Total ${a.taps.length} sharelink di sesi ini.` : 'Sesi dijeda. Tekan Lanjut untuk mencatat lagi.';
@@ -362,7 +361,7 @@ $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 
-const WEB_BUILD = '2026-11-25a'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
+const WEB_BUILD = '2026-11-25b'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
 
 /* ---------- jembatan untuk app Android (gelembung melayang) ---------- */
 const API = {

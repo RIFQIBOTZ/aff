@@ -76,8 +76,6 @@
 .tabs button{font-size:.66rem;letter-spacing:.01em}
 #tab-setelan .backup{margin-bottom:14px}
 
-/* ---------- undo di atas daftar metode ---------- */
-#btn-undo{margin:6px 0 14px}
 
 /* ---------- lipatan "Data tersimpan" di kartu impor ---------- */
 .an-fold{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);overflow:hidden}
@@ -93,3 +91,12 @@
 .an-log li{display:grid;gap:2px;font-size:.8rem;line-height:1.45}
 .an-log time{color:var(--muted);font:500 .7rem var(--mono)}
 .an-del{margin-top:14px;width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.08);color:#ff8a9c;font-weight:600;font-size:.85rem}
+
+/* ---------- metode KOLEKSI dan kategori website ---------- */
+:root{--koleksi:var(--amber)}
+.method.koleksi{--c:var(--koleksi)}
+.m.koleksi{--c:var(--koleksi)}
+.card.koleksi{--c:var(--koleksi)}
+.an-meth.m-koleksi{--c:var(--koleksi)}
+.an-meth.m-cooler{--c:var(--mint)}
+.an-meth.m-3dmark{--c:var(--coral)}
