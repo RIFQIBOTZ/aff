@@ -74,10 +74,10 @@ function parseCSV(text) {
 
 /* ---------- penyimpanan ---------- */
 let store = null;
-const emptyStore = () => ({ v: 1, tags: [], refs: [], regs: [], clicks: [], orders: {}, alias: {} });
+const emptyStore = () => ({ v: 1, tags: [], refs: [], regs: [], clicks: [], orders: {}, alias: {}, log: [] });
 function load() {
   if (store) return store;
-  try { const r = JSON.parse(localStorage.getItem(RK)); store = r && r.v === 1 ? r : emptyStore(); if (!store.alias) store.alias = {}; } catch (e) { store = emptyStore(); }
+  try { const r = JSON.parse(localStorage.getItem(RK)); store = r && r.v === 1 ? r : emptyStore(); if (!store.alias) store.alias = {}; if (!store.log) store.log = []; } catch (e) { store = emptyStore(); }
   return store;
 }
 function persist() { try { localStorage.setItem(RK, JSON.stringify(store)); return true; } catch (e) { return false; } }
@@ -328,19 +328,32 @@ function trend(days, f, title) {
   return `<p class="dim">${title}</p><div class="an-bars">${a.map(d => `<i style="height:${Math.max(f(d) ? 8 : 2, f(d) / mx * 100)}%" title="${dmy(d.d)}: ${f(d)}"></i>`).join('')}</div><div class="an-axis"><span>${dmy(a[0].d).slice(0, 5)}</span><span>${dmy(a[a.length - 1].d).slice(0, 5)}</span></div>`;
 }
 
+function describe(x) {
+  if (x.error) return x.error;
+  if (x.type === 'riwayat') return `${x.placed} pesanan dimasukkan ke sesi menurut tanggal klik${x.changed ? ', ' + x.changed + ' isian berubah' : ''}${x.days ? ', total klik harian diisi untuk ' + x.days + ' hari' : ''}${x.noSession ? '; ' + x.noSession + ' pesanan tidak punya sesi di tanggal klik-nya' : ''}${x.other ? '; ' + x.other + ' pesanan bertag website atau tidak dikenal tidak dimasukkan' : ''}`;
+  if (x.type === 'klik') return `laporan klik, ${x.added} klik baru, ${x.dup} sudah ada${x.bad ? ', ' + x.bad + ' baris dilewati' : ''}`;
+  return `laporan komisi, ${x.orders} pesanan: ${x.added} baru, ${x.updated} diperbarui, ${x.same} tidak berubah${x.bad ? ', ' + x.bad + ' dilewati' : ''}`;
+}
+
+let foldOpen = false;
 function importCard(st) {
   const kb = Math.round(JSON.stringify(st).length / 1024), no = Object.keys(st.orders).length;
-  const m = msgs.map(x => `<li class="${x.error ? 'bad' : 'ok'}">${esc(x.name)}: ${x.error ? esc(x.error)
-    : x.type === 'riwayat' ? `${x.placed} pesanan dimasukkan ke sesi menurut tanggal klik${x.changed ? ', ' + x.changed + ' isian berubah' : ''}${x.days ? ', total klik harian diisi untuk ' + x.days + ' hari' : ''}${x.noSession ? '; ' + x.noSession + ' pesanan tidak punya sesi di tanggal klik-nya' : ''}${x.other ? '; ' + x.other + ' pesanan bertag website atau tidak dikenal tidak dimasukkan' : ''}`
-    : x.type === 'klik' ? `laporan klik, ${x.added} klik baru, ${x.dup} sudah ada${x.bad ? ', ' + x.bad + ' baris dilewati' : ''}`
-    : `laporan komisi, ${x.orders} pesanan: ${x.added} baru, ${x.updated} diperbarui, ${x.same} tidak berubah${x.bad ? ', ' + x.bad + ' dilewati' : ''}`}</li>`).join('');
+  const m = msgs.map(x => `<li class="${x.error ? 'bad' : 'ok'}">${esc(x.name)}: ${esc(describe(x))}</li>`).join('');
+  const log = st.log.slice().reverse().map(e => `<li><time>${when(e.t)}</time><span>${esc(e.name)}: ${esc(e.text)}</span></li>`).join('');
   return card('M12 21V9M7 14l5-5 5 5M5 3h14', 'Impor laporan Shopee', `
-    <p class="dim">Pilih Laporan Klik dan Laporan Komisi (CSV) sekaligus. Impor ulang aman: klik yang sama dilewati, status pesanan diperbarui.</p>
+    <p class="dim">Pilih Laporan Klik dan Laporan Komisi (CSV). Di pemilih file, tekan lama satu file lalu pilih file kedua untuk memilih keduanya sekaligus. Impor ulang aman: klik yang sama dilewati, status pesanan diperbarui.</p>
     <div class="ctrls"><button class="ghost" data-an="pick">Pilih file CSV</button>${no ? '<button class="ghost" data-an="resync">Terapkan ke Riwayat</button>' : ''}</div>
     <input type="file" id="an-file" multiple hidden>
     ${m ? `<ul class="an-msg">${m}</ul>` : ''}
-    <p class="dim an-store">Tersimpan: ${st.clicks.length} klik, ${no} pesanan (${kb} KB). Data ini bisa diimpor ulang dari CSV Shopee, jadi tidak ikut Ekspor JSON.
-      ${st.clicks.length || no ? '<button class="an-link" data-an="clear">Hapus data laporan</button>' : ''}</p>`);
+    <details class="an-fold"${foldOpen ? ' open' : ''}>
+      <summary><span>Data tersimpan</span><b>${st.clicks.length} klik, ${no} pesanan</b>${ic('M6 9l6 6 6-6')}</summary>
+      <div class="an-fold-body">
+        <p class="dim">Ukuran ${kb} KB di penyimpanan app. Data ini bisa diimpor ulang dari CSV Shopee, jadi tidak ikut Ekspor JSON.</p>
+        <p class="dim">Riwayat impor</p>
+        ${log ? `<ul class="an-log">${log}</ul>` : '<p class="dim">Belum ada impor.</p>'}
+        ${st.clicks.length || no ? '<button class="an-del" data-an="clear">Hapus data laporan</button>' : ''}
+      </div>
+    </details>`);
 }
 
 function rangeCard(b) {
@@ -424,12 +437,14 @@ async function importFiles(files) {
   for (const f of files) {
     try { msgs.push(importText(await readText(f), f.name)); } catch (e) { msgs.push({ name: f.name, error: 'Gagal membaca file.' }); }
   }
+  const stl = load(); stl.log = stl.log.concat(msgs.filter(x => x.type !== 'riwayat').map(x => ({ t: Math.floor(Date.now() / 1000), name: x.name, text: describe(x) }))).slice(-12);
   if (!persist()) msgs.push({ name: 'Penyimpanan', error: 'Gagal menyimpan, kemungkinan penuh. Hapus data laporan lama lalu coba lagi.' });
   const r = syncRiwayat();
   if (r && (r.placed || r.days || r.changed || r.noSession || r.other)) msgs.push(Object.assign({ name: 'Riwayat', type: 'riwayat' }, r));
   render();
 }
 
+document.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('an-fold')) foldOpen = e.target.open; }, true);
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-an]'); if (!t || !t.closest('#analisis')) return;
   const a = t.dataset.an;

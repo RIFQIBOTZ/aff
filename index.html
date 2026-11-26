@@ -57,12 +57,12 @@
         <span class="card-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
         <span>Catat Sharelink</span>
       </div>
+      <button id="btn-undo" class="ghost small"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg><span id="undo-label">Batalkan tap terakhir</span></button>
       <div class="methods" id="methods">
         <button class="method manual" data-m="manual"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="name">Manual</span><span class="n" data-n="manual">0</span></button>
         <button class="method gpt" data-m="gpt"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="name">IMAGE GPT</span><span class="n" data-n="gpt">0</span></button>
         <button class="method claude" data-m="claude"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="name">IMAGE CLAUDE</span><span class="n" data-n="claude">0</span></button>
       </div>
-      <button id="btn-undo" class="ghost small"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Batalkan tap terakhir</button>
     </div>
 
     <div class="dashboard-card" id="log-card" hidden>
@@ -88,6 +88,13 @@
       <p>Bandingkan pesanan per sharelink antar metode</p>
     </header>
     <div id="ringkasan"></div>
+  </section>
+
+  <section id="tab-setelan" hidden>
+    <header class="page-header">
+      <h1><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg> <span class="grad">Setelan</span></h1>
+      <p>Gelembung, pembaruan, dan cadangan data</p>
+    </header>
     <div class="backup" id="bubble-box" hidden>
       <h3>Gelembung melayang</h3>
       <p class="dim" id="bubble-msg">Bubble di atas app lain, supaya sharelink bisa dicatat dengan sekali tap.</p>
@@ -134,6 +141,7 @@
   <button role="tab" data-tab="riwayat" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><span>Riwayat</span></button>
   <button role="tab" data-tab="ringkasan" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 20V10M12 20V4M6 20v-6"/></svg><span>Ringkasan</span></button>
   <button role="tab" data-tab="analisis" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg><span>Analisis</span></button>
+  <button role="tab" data-tab="setelan" aria-selected="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>Setelan</span></button>
 </nav>
 
 <dialog id="dlg-edit" aria-labelledby="dlg-title">

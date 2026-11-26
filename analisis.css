@@ -67,3 +67,29 @@
 .an-meth .an-sub{margin-top:2px}
 .st.unpaid{background:rgba(255,255,255,.1);color:var(--muted)}
 .an-unk{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line2)}
+
+/* ---------- dock 5 tab ---------- */
+.tabs{grid-template-columns:repeat(5,1fr)}
+.dock-pill{width:calc((100% - 16px)/5)}
+.tabs:has(button:nth-of-type(4)[aria-selected="true"]){--idx:3}
+.tabs:has(button:nth-of-type(5)[aria-selected="true"]){--idx:4}
+.tabs button{font-size:.66rem;letter-spacing:.01em}
+#tab-setelan .backup{margin-bottom:14px}
+
+/* ---------- undo di atas daftar metode ---------- */
+#btn-undo{margin:6px 0 14px}
+
+/* ---------- lipatan "Data tersimpan" di kartu impor ---------- */
+.an-fold{margin-top:14px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);overflow:hidden}
+.an-fold summary{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;list-style:none;min-height:48px}
+.an-fold summary::-webkit-details-marker{display:none}
+.an-fold summary span{flex:1;color:var(--muted);font:600 .74rem var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.an-fold summary b{font:600 .8rem var(--mono);color:var(--text)}
+.an-fold summary .i{width:1.1em;height:1.1em;color:var(--lime);transition:transform .35s var(--spring)}
+.an-fold[open] summary .i{transform:rotate(180deg)}
+.an-fold[open] summary{border-bottom:1px solid var(--line)}
+.an-fold-body{padding:12px 14px 14px}
+.an-log{list-style:none;padding:0;margin:6px 0 0;display:grid;gap:8px}
+.an-log li{display:grid;gap:2px;font-size:.8rem;line-height:1.45}
+.an-log time{color:var(--muted);font:500 .7rem var(--mono)}
+.an-del{margin-top:14px;width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(255,77,106,.4);background:rgba(255,77,106,.08);color:#ff8a9c;font-weight:600;font-size:.85rem}

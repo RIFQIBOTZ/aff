@@ -178,6 +178,7 @@ function renderSesi() {
   KEYS.forEach(k => { $(`[data-n="${k}"]`).textContent = c[k]; });
   $$('.method').forEach(b => b.disabled = !running);
   $('#btn-undo').disabled = !a || !a.taps.length;
+  $('#undo-label').textContent = a && a.taps.length ? 'Batalkan tap terakhir: ' + M[a.taps[a.taps.length - 1].m] : 'Batalkan tap terakhir';
   $('#hint').textContent = !a
     ? 'Tekan Mulai, lalu tap metode tiap kali selesai posting satu sharelink.'
     : running ? `Total ${a.taps.length} sharelink di sesi ini.` : 'Sesi dijeda. Tekan Lanjut untuk mencatat lagi.';
@@ -339,7 +340,7 @@ function importJSON(file) {
 /* ---------- tab dan event ---------- */
 function showTab(name) {
   $$('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-  ['sesi', 'riwayat', 'ringkasan', 'analisis'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
+  ['sesi', 'riwayat', 'ringkasan', 'analisis', 'setelan'].forEach(n => { $(`#tab-${n}`).hidden = n !== name; });
   if (name === 'riwayat') renderRiwayat();
   if (name === 'ringkasan') renderRingkasan();
   if (name === 'analisis' && typeof renderAnalisis === 'function') renderAnalisis();
@@ -361,7 +362,7 @@ $('#btn-import').addEventListener('click', () => $('#file-import').click());
 $('#file-import').addEventListener('change', e => { importJSON(e.target.files[0]); e.target.value = ''; });
 
 
-const WEB_BUILD = '2026-11-24c'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
+const WEB_BUILD = '2026-11-25a'; // naikkan tiap update web, supaya terlihat versi mana yang sedang dimuat
 
 /* ---------- jembatan untuk app Android (gelembung melayang) ---------- */
 const API = {
